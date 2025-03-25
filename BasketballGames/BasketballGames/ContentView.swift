@@ -7,15 +7,50 @@
 
 import SwiftUI
 
+struct Game: Codable {
+    var isHomeGame: Bool
+    var opponent: String
+    var score: Score
+    var team: String
+    var id: Int
+    var date: String
+}
+
+struct Score: Codable {
+    var opponent: Int
+    var unc: Int
+}
+
 struct ContentView: View {
+    @State var games = [Game]()
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+            List(games, id: \.id) { game in
+                Text("Opponenet: \(game.opponent)")
+            }
         }
-        .padding()
+        .task {
+            await loadData()
+        }
+    }
+    
+    func loadData() async {
+        guard let url = URL(string: "https://api.samuelshi.com/uncbasketball") else {
+            return
+        }
+        
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let decoder = JSONDecoder()
+            if let decodedData = try? decoder.decode([Game].self, from: data) {
+                games = decodedData
+            } else {
+                print("error")
+            }
+        } catch {
+            print("invalid")
+        }
+                
     }
 }
 
